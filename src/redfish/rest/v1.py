@@ -462,7 +462,8 @@ class RestClientBase(object):
     def __init__(self, base_url, username=None, password=None,
                                 default_prefix='/redfish/v1/', sessionkey=None,
                                 capath=None, cafile=None, timeout=None,
-                                max_retry=None, proxies=None, check_connectivity=True):
+                                max_retry=None, proxies=None, default_headers=[],
+                                check_connectivity=True):
         """Initialization of the base class RestClientBase
 
         :param base_url: The URL of the remote system
@@ -485,6 +486,8 @@ class RestClientBase(object):
         :type max_retry: int
         :param proxies: Dictionary containing protocol to proxy URL mappings
         :type proxies: dict
+        :param default_headers: Dictionary containing default headers used in all request.
+        :type default_headers: dict
         :param check_connectivity: A boolean to determine whether the client immediately checks for
         connectivity to the base_url or not.
         :type check_connectivity: bool
@@ -503,6 +506,7 @@ class RestClientBase(object):
             self._session = requests.Session()
         self._timeout = timeout
         self._max_retry = max_retry if max_retry is not None else 10
+        self.default_headers = default_headers
         self._proxies = proxies
         self.login_url = None
         self.default_prefix = default_prefix
@@ -917,6 +921,9 @@ class RestClientBase(object):
             attempts = attempts + 1
             LOGGER.info('Attempt %s of %s', attempts, path)
 
+            # Add defined default headers to request
+            headers = headers | self.default_headers
+
             try:
                 if sys.version_info < (3, 3):
                     inittime = time.clock()
@@ -1068,7 +1075,8 @@ class HttpClient(RestClientBase):
                                 default_prefix='/redfish/v1/',
                                 sessionkey=None, capath=None,
                                 cafile=None, timeout=None,
-                                max_retry=None, proxies=None, check_connectivity=True):
+                                max_retry=None, proxies=None, default_headers=[],
+                                check_connectivity=True):
         """Initialize HttpClient
 
         :param base_url: The url of the remote system
@@ -1091,6 +1099,8 @@ class HttpClient(RestClientBase):
         :type max_retry: int
         :param proxies: Dictionary containing protocol to proxy URL mappings
         :type proxies: dict
+        :param default_headers: Dictionary containing default headers used in all request.
+        :type default_headers: dict
         :param check_connectivity: A boolean to determine whether the client immediately checks for
         connectivity to the base_url or not.
         :type check_connectivity: bool
@@ -1101,6 +1111,7 @@ class HttpClient(RestClientBase):
                             sessionkey=sessionkey, capath=capath,
                             cafile=cafile, timeout=timeout,
                             max_retry=max_retry, proxies=proxies,
+                            default_headers=default_headers,
                             check_connectivity=check_connectivity)
 
         try:
@@ -1158,7 +1169,8 @@ def redfish_client(base_url=None, username=None, password=None,
                                 default_prefix='/redfish/v1/',
                                 sessionkey=None, capath=None,
                                 cafile=None, timeout=None,
-                                max_retry=None, proxies=None, check_connectivity=True):
+                                max_retry=None, proxies=None,
+                                default_headers=[], check_connectivity=True, ):
     """Create and return appropriate REDFISH client instance."""
     """ Instantiates appropriate Redfish object based on existing"""
     """ configuration. Use this to retrieve a pre-configured Redfish object
@@ -1183,6 +1195,8 @@ def redfish_client(base_url=None, username=None, password=None,
     :type max_retry: int
     :param proxies: Dictionary containing protocol to proxy URL mappings
     :type proxies: dict
+    :param default_headers: Dictionary containing default headers used in all request.
+    :type default_headers: dict
     :param check_connectivity: A boolean to determine whether the client immediately checks for
     connectivity to the base_url or not.
     :type check_connectivity: bool
@@ -1195,4 +1209,5 @@ def redfish_client(base_url=None, username=None, password=None,
     return HttpClient(base_url=base_url, username=username, password=password,
                         default_prefix=default_prefix, sessionkey=sessionkey,
                         capath=capath, cafile=cafile, timeout=timeout,
-                        max_retry=max_retry, proxies=proxies, check_connectivity=check_connectivity)
+                        max_retry=max_retry, proxies=proxies,
+                        default_headers=default_headers, check_connectivity=check_connectivity)
